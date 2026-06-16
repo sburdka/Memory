@@ -11,7 +11,7 @@ export interface Memory {
 
 export interface ChatRequest {
   user_id: string;
-  model: "openai" | "claude";
+  model: "openai" | "anthropic";
   message: string;
 }
 

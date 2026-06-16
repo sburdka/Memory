@@ -1,20 +1,20 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding assistants when working with code in this repository.
 
 ## Project Overview
 
-MemoryOS is a vendor-independent memory infrastructure layer that decouples memory from AI reasoning. It allows users to retain and retrieve context across different AI providers (OpenAI, Claude) so that memory persists when switching models.
+MemoryOS is a vendor-independent memory infrastructure layer that decouples memory from AI reasoning. It allows users to retain and retrieve context across different AI providers (OpenAI, Anthropic) so that memory persists when switching models.
 
 ```
-User → MemoryOS → GPT-4o / Claude
+User → MemoryOS → GPT-4o / Anthropic
 ```
 
 ## Stack
 
 **Backend:** FastAPI, Python 3.12, SQLAlchemy (async), PostgreSQL, Qdrant (vector DB)
 **Frontend:** Next.js 15, TypeScript, Tailwind CSS
-**AI Providers:** OpenAI (GPT-4o + text-embedding-3-small), Anthropic Claude
+**AI Providers:** OpenAI (GPT-4o + text-embedding-3-small), Anthropic
 **Deployment:** Docker Compose
 
 ## Running the Project
@@ -81,7 +81,7 @@ lib/api.ts               — All fetch() calls to the backend API
 
 1. `retrieval_service.search_memories()` — embed query, search Qdrant top-10 by user_id filter
 2. `llm_router.build_system_prompt()` — prepend memory block to system prompt
-3. `llm_router.call_llm()` — route to OpenAI or Claude
+3. `llm_router.call_llm()` — route to OpenAI or Anthropic
 4. `llm_router.extract_memories()` — extract structured facts via `gpt-4o-mini` with `response_format: json_object`
 5. `memory_service.store_memory()` — write to PostgreSQL, then upsert embedding to Qdrant
 6. `reflection_service.should_reflect()` — trigger every `REFLECTION_THRESHOLD` (default 20) memories; generate insight and store as `reflective` type
@@ -143,7 +143,7 @@ All config lives in `backend/app/config.py` (Pydantic Settings). Key vars:
 | `DATABASE_URL` | postgres+asyncpg://... | PostgreSQL connection |
 | `QDRANT_URL` | http://localhost:6333 | Qdrant vector DB |
 | `OPENAI_API_KEY` | — | Required for chat + embeddings + extraction |
-| `ANTHROPIC_API_KEY` | — | Required for Claude model |
+| `ANTHROPIC_API_KEY` | — | Required for Anthropic model |
 | `EMBEDDING_MODEL` | text-embedding-3-small | 1536-dim vectors |
 | `REFLECTION_THRESHOLD` | 20 | Memories before insight generation |
 
@@ -165,6 +165,6 @@ The `MemGovern` research project (uploaded as reference) uses the same architect
 ## MVP Success Criteria
 
 1. User chats with GPT-4o → memories extracted and stored
-2. User switches to Claude → Claude receives stored memories automatically
+2. User switches to Anthropic → Anthropic model receives stored memories automatically
 3. Memory dashboard shows memories grouped by type (episodic / semantic / reflective)
 4. After 20 memories, reflection engine generates an insight visible in the dashboard

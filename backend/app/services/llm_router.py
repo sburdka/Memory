@@ -36,7 +36,7 @@ async def call_llm(model: str, system: str, user_message: str) -> str:
         )
         return resp.choices[0].message.content or ""
 
-    if model == "claude":
+    if model == "anthropic":
         resp = await _get_anthropic().messages.create(
             model=settings.ANTHROPIC_CHAT_MODEL,
             max_tokens=1024,

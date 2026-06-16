@@ -11,7 +11,7 @@ interface Message {
 
 export default function ChatInterface() {
   const [userId, setUserId] = useState("demo_user");
-  const [model, setModel] = useState<"openai" | "claude">("openai");
+  const [model, setModel] = useState<"openai" | "anthropic">("openai");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,7 +57,7 @@ export default function ChatInterface() {
           />
         </div>
         <div className="flex gap-2">
-          {(["openai", "claude"] as const).map((m) => (
+          {(["openai", "anthropic"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setModel(m)}
@@ -67,7 +67,7 @@ export default function ChatInterface() {
                   : "bg-gray-800 text-gray-400 hover:text-white"
               }`}
             >
-              {m === "openai" ? "GPT-4o" : "Claude"}
+              {m === "openai" ? "GPT-4o" : "Anthropic"}
             </button>
           ))}
         </div>
