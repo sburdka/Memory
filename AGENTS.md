@@ -162,6 +162,72 @@ The `MemGovern` research project (uploaded as reference) uses the same architect
 - SentenceTransformers embeddings → replaced with OpenAI `text-embedding-3-small`
 - Experience cards (structured JSON) → replaced with the simpler `{type, value}` memory extraction format
 
+## Quantization Module (`quantization/`)
+
+MiLo implementation — ultra-low-bit MoE quantization with adaptive low-rank compensators (MLSys 2025).
+
+### Algorithm
+
+1. **Group quantization** — asymmetric min-max quantization per `group_size` elements (3/4/8-bit)
+2. **Low-rank compensator** — SVD of quantization error `E = W - dequant(quant(W))`, keep top-k singular values: `U_k @ V_k`
+3. **Proximal optimization** — iteratively refine scale/zero to minimize `||E||`
+4. **Rank strategy** — Kurtosis-based (Mixtral) or Frequency-based (DeepSeek) adaptive rank assignment
+
+### Forward pass
+
+```
+output = F.linear(x, dequant(W_q)) + F.linear(F.linear(x, V_k), U_k) + bias
+```
+
+The compensator is applied in two cheap matmuls (rank ≪ hidden dim) instead of materializing `U @ V`.
+
+### Module structure
+
+```
+quantization/
+  bitpack.py        — BitPack: pack/unpack 2/3/4/8-bit integers
+  optimize.py       — proximal optimization, grid search, AdamW scale tuning
+  quantize.py       — Quantizer, MiLoLinear, BaseCompressConfig
+  compensator.py    — rank_generate() (Kurtosis/Frequency/Uniform), load_compensators()
+  compress.py       — CLI: python -m quantization.compress --model ... --arch mixtral
+  evaluate.py       — CLI: python -m quantization.evaluate --tasks wikitext2 arc_easy
+  models/
+    base.py         — BasePatch (layer replacement), BaseMiLoModel (compress/save/load)
+    mixtral.py      — MixtralMiLo
+    deepseek.py     — DeepSeekMiLo
+```
+
+### Compress a model
+
+```bash
+pip install -r quantization/requirements.txt
+python -m quantization.compress \
+    --model mistralai/Mixtral-8x7B-v0.1 \
+    --output /path/to/output \
+    --arch mixtral \
+    --nbits 3 --group-size 64 \
+    --sparse-rank 16 --dense-rank 512 \
+    --rank-strategy Kurtosis
+```
+
+### Evaluate
+
+```bash
+python -m quantization.evaluate \
+    --model-dir /path/to/output \
+    --base-model mistralai/Mixtral-8x7B-v0.1 \
+    --arch mixtral \
+    --tasks wikitext2 arc_easy hellaswag
+```
+
+### Key design decisions
+
+- **`MiLoLinear`** stores `W_q` (packed ints) + `meta` (scale/zero) + `U, V` parameters. `state_dict()` is safetensors-compatible (all tensors, no Python objects).
+- **`BitPack.pack_3bit_32`** packs 10 × 3-bit values into one `int32` word.
+- **`BaseCompressConfig`** is a plain `dict` subclass so it can be passed directly as `patch_params`.
+- **Compensators** are saved separately (`compensators.pt`) from weights (`qmodel.pt`) to allow rank changes without re-quantizing.
+- Ranks are persisted to `ranks.json` alongside the model.
+
 ## MVP Success Criteria
 
 1. User chats with GPT-4o → memories extracted and stored
