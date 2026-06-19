@@ -1,0 +1,37 @@
+# MiLo compression config for DeepSeek on Azure NC80ads_H100_v5
+# GPU: 1x NVIDIA H100 80GB NVL
+# CPU: 80 vCPUs | RAM: 640 GB
+
+machine:
+  vm_sku: NC80ads_H100_v5
+  gpu: H100_80GB_NVL
+  gpu_count: 1
+  vram_gb: 80
+  cpu_cores: 80
+  ram_gb: 640
+
+# -----------------------------------------------------------------------
+# H100 supports FP8 natively — use DeepSeek-V2-Lite for better throughput
+# Alternatively: deepseek-ai/deepseek-moe-16b-base for the same as A100
+# -----------------------------------------------------------------------
+model:
+  model_id: deepseek-ai/DeepSeek-V2-Lite
+  arch: deepseek_v2
+  torch_dtype: bfloat16         # H100 has 2× BF16 throughput vs A100
+  trust_remote_code: true
+
+# -----------------------------------------------------------------------
+# Higher ranks are affordable on H100 — SVD computation is ~3× faster
+# -----------------------------------------------------------------------
+compress:
+  nbits: 3
+  group_size: 64
+  axis: 1
+  iter: 15                      # more iterations — H100 is faster
+  sparse_rank: 64               # higher rank for DeepSeek-V2-Lite experts
+  dense_rank: 2048              # higher rank for MLA attention layers
+  rank_strategy: Frequency
+  compensator_dtype: fp16
+
+output_dir: /mnt/data/deepseek_v2_milo_h100
+device: cuda

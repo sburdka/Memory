@@ -33,10 +33,12 @@ from transformers import AutoModelForCausalLM
 from .quantize import BaseCompressConfig
 from .models.mixtral import MixtralMiLo
 from .models.deepseek import DeepSeekMiLo
+from .models.deepseek_v2 import DeepSeekV2MiLo
 
 _ARCH_MAP = {
     "mixtral": MixtralMiLo,
     "deepseek": DeepSeekMiLo,
+    "deepseek_v2": DeepSeekV2MiLo,   # DeepSeek-V2-Lite / DeepSeek-V2 (MLA architecture)
 }
 
 

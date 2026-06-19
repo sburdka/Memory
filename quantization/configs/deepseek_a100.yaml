@@ -1,0 +1,42 @@
+# MiLo compression config for DeepSeek on Azure NC48ads_A100_v4
+# GPU: 1x NVIDIA A100 80GB PCIe
+# CPU: 48 vCPUs | RAM: 440 GB
+
+machine:
+  vm_sku: NC48ads_A100_v4
+  gpu: A100_80GB
+  gpu_count: 1
+  vram_gb: 80
+  cpu_cores: 48
+  ram_gb: 440
+
+# -----------------------------------------------------------------------
+# Target model — deepseek-moe-16b-base fits in fp16 on a single A100 80GB
+# For DeepSeek-V2-Lite use model_id: deepseek-ai/DeepSeek-V2-Lite
+# -----------------------------------------------------------------------
+model:
+  model_id: deepseek-ai/deepseek-moe-16b-base
+  arch: deepseek
+  torch_dtype: bfloat16         # A100 has fast BF16 tensor cores
+  trust_remote_code: true
+
+# -----------------------------------------------------------------------
+# MiLo compression — 3-bit quantization with low-rank compensators
+# 80 GB VRAM is ample for 16B model; use higher ranks for better accuracy
+# -----------------------------------------------------------------------
+compress:
+  nbits: 3
+  group_size: 64
+  axis: 1
+  iter: 10                      # proximal optimization iterations
+  sparse_rank: 32               # MoE expert layers  (higher than reference default)
+  dense_rank: 1024              # attention layers    (higher than reference default)
+  rank_strategy: Frequency      # Frequency-based for DeepSeek MoE
+  compensator_dtype: fp16
+
+# Expected VRAM after quantization (approx):
+#   16B model × 3-bit ≈ 6 GB  +  compensators ≈ 4 GB  →  ~10 GB total
+# Leaves >65 GB free for KV cache during long-context inference.
+
+output_dir: /mnt/data/deepseek_milo_a100
+device: cuda

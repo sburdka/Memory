@@ -220,6 +220,27 @@ python -m quantization.evaluate \
     --tasks wikitext2 arc_easy hellaswag
 ```
 
+### Azure GPU machine configs
+
+| VM SKU | GPU | VRAM | Config file | Recommended model |
+|--------|-----|------|-------------|-------------------|
+| NC48ads_A100_v4 | A100 80 GB PCIe | 80 GB | `configs/deepseek_a100.yaml` | deepseek-moe-16b-base |
+| NC80ads_H100_v5 | H100 80 GB NVL | 80 GB | `configs/deepseek_h100.yaml` | DeepSeek-V2-Lite |
+
+**Quick start on either VM:**
+```bash
+bash quantization/scripts/setup_azure_gpu.sh       # one-time env setup
+conda activate milo
+# A100:
+python quantization/scripts/run_deepseek.py --config quantization/configs/deepseek_a100.yaml
+# H100:
+python quantization/scripts/run_deepseek.py --config quantization/configs/deepseek_h100.yaml
+# Evaluate only:
+python quantization/scripts/run_deepseek.py --config quantization/configs/deepseek_a100.yaml --eval-only
+```
+
+Post-compression VRAM footprint (16B model @ 3-bit): ~10 GB → leaves 65+ GB free for KV cache.
+
 ### Key design decisions
 
 - **`MiLoLinear`** stores `W_q` (packed ints) + `meta` (scale/zero) + `U, V` parameters. `state_dict()` is safetensors-compatible (all tensors, no Python objects).
